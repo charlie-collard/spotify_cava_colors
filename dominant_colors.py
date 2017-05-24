@@ -11,9 +11,6 @@ def print_color(color):
     r, g, b = int(color[0]*255), int(color[1]*255), int(color[2]*255)
     print("\x1b[48;2;%d;%d;%dm        \x1b[0m" % (r,g,b) + " #%02x%02x%02x" % (r,g,b))
 
-def four_color_split(pixels):
-    return bucket_sort(pixels, 4)
-
 def bucket_sort(pixels, levels):
     color_ranges = [
             max(pixels, key=lambda x: x[color])[color] -
@@ -44,7 +41,9 @@ if __name__ == "__main__":
     px = filter(lambda x: not (x[0]>250 and x[1]>250 and x[2]>250), px)
     px = filter(lambda x: not (x[0]<10 and x[1]<10 and x[2]<10), px)
     px = map(lambda x: (x[0]/255., x[1]/255., x[2]/255.), px)
-    buckets = four_color_split(px)
+
+    # Split the pixels into 2**n buckets
+    buckets = bucket_sort(px, 4)
     colors = []
     for bucket in buckets:
         color_sums = reduce(lambda x, y: (x[0]+y[0], x[1]+y[1], x[2]+y[2]), bucket)
