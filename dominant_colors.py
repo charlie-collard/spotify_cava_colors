@@ -125,10 +125,15 @@ if __name__ == "__main__":
         colors.append(hsv_color)
         print_color(color)
 
-    # Pick the two brightest colors
-    color1 = max(colors, key=lambda x: x[1]+x[2])
+    # Pick the brightest color
+    color1 = max(colors, key=lambda x: x[2])
     colors.remove(color1)
-    color2 = max(colors, key=lambda x: x[1]+x[2])
+    # Filter colors with similar hues to the first chosen
+    no_similar_colors = filter(lambda x: min(1-abs(x[0]-color1[0]), abs(x[0]-color1[0])) > 0.1, colors)
+    if len(no_similar_colors) != 0:
+        color2 = max(no_similar_colors, key=lambda x: x[2])
+    else:
+        color2 = max(colors, key=lambda x: x[2])
 
     # Darkest should be first
     if color1[2] > color2[2]:
