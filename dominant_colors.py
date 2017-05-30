@@ -116,7 +116,7 @@ if __name__ == "__main__":
     px = map(lambda x: (x[0]/255., x[1]/255., x[2]/255.), px)
 
     # Split the pixels into 2**n buckets
-    buckets = bucket_sort(px, 4)
+    buckets = bucket_sort(px, 3)
     colors = []
     for bucket in buckets:
         color_sums = reduce(lambda x, y: (x[0]+y[0], x[1]+y[1], x[2]+y[2]), bucket)
