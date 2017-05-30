@@ -130,7 +130,7 @@ if __name__ == "__main__":
     colors.remove(color1)
     # Filter colors with similar hues to the first chosen
     no_similar_colors = filter(lambda x: min(1-abs(x[0]-color1[0]), abs(x[0]-color1[0])) > 0.1, colors)
-    if len(no_similar_colors) != 0:
+    if len(no_similar_colors) != 0 and any(map(lambda x: x[2]>0.4, no_similar_colors)):
         color2 = max(no_similar_colors, key=lambda x: x[2])
     else:
         color2 = max(colors, key=lambda x: x[2])
