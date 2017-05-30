@@ -147,6 +147,11 @@ if __name__ == "__main__":
     print_color(rgb_color2)
     r1, g1, b1 = int(rgb_color1[0]*255), int(rgb_color1[1]*255), int(rgb_color1[2]*255)
     r2, g2, b2 = int(rgb_color2[0]*255), int(rgb_color2[1]*255), int(rgb_color2[2]*255)
+    # Clamp colors in case of floating point rounding errors
+    r1, g1, b1 = max(r1, 0), max(g1, 0), max(b1, 0)
+    r2, g2, b2 = max(r2, 0), max(g2, 0), max(b2, 0)
+    r1, g1, b1 = min(r1, 255), min(g1, 255), min(b1, 255)
+    r2, g2, b2 = min(r2, 255), min(g2, 255), min(b2, 255)
 
     with open(CAVA_CONFIG) as f:
         cava_config = f.read()
