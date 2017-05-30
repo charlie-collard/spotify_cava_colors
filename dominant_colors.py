@@ -18,6 +18,7 @@ CAVA_CONFIG = HOME_DIR + "/.config/cava/config"
 def print_color(color):
     r, g, b = int(color[0]*255), int(color[1]*255), int(color[2]*255)
     print("\x1b[48;2;%d;%d;%dm        \x1b[0m" % (r,g,b) + " #%02x%02x%02x" % (r,g,b))
+
 def bucket_sort(pixels, levels):
     color_ranges = [
             max(pixels, key=lambda x: x[color])[color] -
@@ -36,10 +37,6 @@ def bucket_sort(pixels, levels):
         return [px1, px2]
     else:
         return bucket_sort(px1, levels) + bucket_sort(px2, levels)
-
-# Lower is better (distance from 1/6 difference)
-def rate_fitness(color1, color2):
-    return abs(1./6 - abs(color1[0] - color2[0]))
 
 class RequestCtrl:
     GET = requests.get
@@ -128,29 +125,26 @@ if __name__ == "__main__":
         colors.append(hsv_color)
         print_color(color)
 
-    best_pair = (colors[0], colors[1])
-    best_fitness = rate_fitness(colors[0], colors[1])
-    for i in range(len(colors)):
-        color = colors[i]
-        for other_color in colors[i+1:]:
-            fitness = rate_fitness(color, other_color)
-            if fitness < best_fitness:
-                best_pair = (color, other_color)
-                best_fitness = fitness
+    # Pick the two brightest colors
+    color1 = max(colors, key=lambda x: x[1]+x[2])
+    colors.remove(color1)
+    color2 = max(colors, key=lambda x: x[1]+x[2])
 
     # Darkest should be first
-    if best_pair[0][2] > best_pair[1][2]:
-        best_pair = (best_pair[1], best_pair[0])
-    print("Best colors found with a fitness of %f" % best_fitness)
-    rgb_color1 = colorsys.hsv_to_rgb(best_pair[0][0], best_pair[0][1], best_pair[0][2])
-    rgb_color2 = colorsys.hsv_to_rgb(best_pair[1][0], best_pair[1][1], best_pair[1][2])
+    if color1[2] > color2[2]:
+        color1, color2 = color2, color1
+
+    rgb_color1 = colorsys.hsv_to_rgb(color1[0], color1[1], color1[2])
+    rgb_color2 = colorsys.hsv_to_rgb(color2[0], color2[1], color2[2])
+    print("Color 1:")
     print_color(rgb_color1)
+    print("Color 2:")
     print_color(rgb_color2)
+    r1, g1, b1 = int(rgb_color1[0]*255), int(rgb_color1[1]*255), int(rgb_color1[2]*255)
+    r2, g2, b2 = int(rgb_color2[0]*255), int(rgb_color2[1]*255), int(rgb_color2[2]*255)
 
     with open(CAVA_CONFIG) as f:
         cava_config = f.read()
-    r1, g1, b1 = int(rgb_color1[0]*255), int(rgb_color1[1]*255), int(rgb_color1[2]*255)
-    r2, g2, b2 = int(rgb_color2[0]*255), int(rgb_color2[1]*255), int(rgb_color2[2]*255)
     cava_config = re.sub(r"^gradient_color_1 = '#.*$",
             "gradient_color_1 = '#%02x%02x%02x'" % (r1, g1, b1),
             cava_config,
