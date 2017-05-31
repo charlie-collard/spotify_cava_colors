@@ -103,12 +103,12 @@ if __name__ == "__main__":
     try:
         images = response["item"]["album"]["images"]
         assert len(images) != 0
-        largest_url = max(images, key=lambda x: x["width"])["url"]
+        smallest_url = min(images, key=lambda x: x["width"])["url"]
     except (KeyError, AssertionError):
         print("Error getting image url")
         exit()
 
-    img = Image.open(BytesIO(requests.get(largest_url).content))
+    img = Image.open(BytesIO(requests.get(smallest_url).content))
     px = img.getdata()
     px = list(px)
     px = filter(lambda x: not (x[0]>250 and x[1]>250 and x[2]>250), px)
