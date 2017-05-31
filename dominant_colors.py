@@ -17,7 +17,7 @@ CAVA_CONFIG = HOME_DIR + "/.config/cava/config"
 
 def print_color(color):
     r, g, b = int(color[0]*255), int(color[1]*255), int(color[2]*255)
-    print("\x1b[48;2;%d;%d;%dm        \x1b[0m" % (r,g,b) + " #%02x%02x%02x" % (r,g,b))
+    print("\x1b[48;2;%d;%d;%dm        \x1b[0m #%02x%02x%02x" % (r,g,b,r,g,b))
 
 def bucket_sort(pixels, levels):
     color_ranges = [
