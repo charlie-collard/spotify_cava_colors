@@ -16,6 +16,10 @@ HUE = 0
 SATURATION = 1
 VALUE = 2
 
+FILE_PATH = os.path.realpath(__file__)[:os.path.realpath(__file__).rfind("/")]
+REFRESH_TOKEN_PATH = FILE_PATH + "/auth/refresh_token"
+ACCESS_TOKEN_PATH = FILE_PATH + "/auth/access_token"
+APP_CREDENTIALS_PATH = FILE_PATH + "/auth/app_credentials"
 HOME_DIR = os.path.expanduser("~")
 CAVA_CONFIG = HOME_DIR + "/.config/cava/config"
 
@@ -51,11 +55,16 @@ class RequestCtrl:
     NEW_TOKEN = {"url": "https://accounts.spotify.com/api/token", "method": POST}
 
     def __init__(self):
-        with open("auth/refresh_token") as f:
+        try:
+            with open(ACCESS_TOKEN_PATH) as f:
+                    self.access_token = f.read()[:-1]
+        except IOError:
+            with open(ACCESS_TOKEN_PATH, "w") as f:
+                f.write("")
+            self.access_token = ""
+        with open(REFRESH_TOKEN_PATH) as f:
             self.refresh_token = f.read()[:-1]
-        with open("auth/access_token") as f:
-            self.access_token = f.read()[:-1]
-        with open("auth/app_credentials") as f:
+        with open(APP_CREDENTIALS_PATH) as f:
             credentials = f.read()[:-1]
             self.client_id, self.client_secret = credentials.split(":")
 
@@ -91,7 +100,7 @@ class RequestCtrl:
                 print(token_extras)
                 token_r = self.make_request(self.NEW_TOKEN, token_extras)
                 self.access_token = token_r["access_token"]
-                with open("auth/access_token", "w") as f:
+                with open(ACCESS_TOKEN_PATH, "w") as f:
                     f.write(self.access_token + "\n")
                 return self.make_request(endpoint, extra)
             else:
