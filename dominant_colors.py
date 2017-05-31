@@ -12,6 +12,10 @@ import subprocess
 RED = 0
 GREEN = 1
 BLUE = 2
+HUE = 0
+SATURATION = 1
+VALUE = 2
+
 HOME_DIR = os.path.expanduser("~")
 CAVA_CONFIG = HOME_DIR + "/.config/cava/config"
 
@@ -111,42 +115,42 @@ if __name__ == "__main__":
     img = Image.open(BytesIO(requests.get(smallest_url).content))
     px = img.getdata()
     px = list(px)
-    px = filter(lambda x: not (x[0]>250 and x[1]>250 and x[2]>250), px)
-    px = filter(lambda x: not (x[0]<30 and x[1]<30 and x[2]<30), px)
-    px = map(lambda x: (x[0]/255., x[1]/255., x[2]/255.), px)
+    px = filter(lambda x: not (x[RED]>250 and x[GREEN]>250 and x[BLUE]>250), px)
+    px = filter(lambda x: not (x[RED]<30 and x[GREEN]<30 and x[BLUE]<30), px)
+    px = map(lambda x: (x[RED]/255., x[GREEN]/255., x[BLUE]/255.), px)
 
     # Split the pixels into 2**n buckets
     buckets = bucket_sort(px, 3)
     colors = []
     for bucket in buckets:
-        color_sums = reduce(lambda x, y: (x[0]+y[0], x[1]+y[1], x[2]+y[2]), bucket)
-        color = map(lambda x: x/len(bucket), color_sums)
-        hsv_color = colorsys.rgb_to_hsv(color[0], color[1], color[2])
+        color_sums = reduce(lambda x, y: (x[RED]+y[RED], x[GREEN]+y[GREEN], x[BLUE]+y[BLUE]), bucket)
+        rgb_color = map(lambda x: x/len(bucket), color_sums)
+        hsv_color = colorsys.rgb_to_hsv(rgb_color[RED], rgb_color[GREEN], rgb_color[BLUE])
         colors.append(hsv_color)
-        print_color(color)
+        print_color(rgb_color)
 
     # Pick the brightest color
-    color1 = max(colors, key=lambda x: x[2])
+    color1 = max(colors, key=lambda x: x[VALUE])
     colors.remove(color1)
     # Filter colors with similar hues to the first chosen
-    no_similar_colors = filter(lambda x: min(1-abs(x[0]-color1[0]), abs(x[0]-color1[0])) > 0.1, colors)
-    if len(no_similar_colors) != 0 and any(map(lambda x: x[2]>0.4, no_similar_colors)):
-        color2 = max(no_similar_colors, key=lambda x: x[2])
+    no_similar_colors = filter(lambda x: min(1-abs(x[HUE]-color1[HUE]), abs(x[HUE]-color1[HUE])) > 0.1, colors)
+    if len(no_similar_colors) != 0 and any(map(lambda x: x[VALUE]>0.4, no_similar_colors)):
+        color2 = max(no_similar_colors, key=lambda x: x[VALUE])
     else:
-        color2 = max(colors, key=lambda x: x[2])
+        color2 = max(colors, key=lambda x: x[VALUE])
 
     # Darkest should be first
-    if color1[2] > color2[2]:
+    if color1[VALUE] > color2[VALUE]:
         color1, color2 = color2, color1
 
-    rgb_color1 = colorsys.hsv_to_rgb(color1[0], color1[1], color1[2])
-    rgb_color2 = colorsys.hsv_to_rgb(color2[0], color2[1], color2[2])
+    rgb_color1 = colorsys.hsv_to_rgb(color1[HUE], color1[SATURATION], color1[VALUE])
+    rgb_color2 = colorsys.hsv_to_rgb(color2[HUE], color2[SATURATION], color2[VALUE])
     print("Color 1:")
     print_color(rgb_color1)
     print("Color 2:")
     print_color(rgb_color2)
-    r1, g1, b1 = int(rgb_color1[0]*255), int(rgb_color1[1]*255), int(rgb_color1[2]*255)
-    r2, g2, b2 = int(rgb_color2[0]*255), int(rgb_color2[1]*255), int(rgb_color2[2]*255)
+    r1, g1, b1 = int(rgb_color1[RED]*255), int(rgb_color1[GREEN]*255), int(rgb_color1[BLUE]*255)
+    r2, g2, b2 = int(rgb_color2[RED]*255), int(rgb_color2[GREEN]*255), int(rgb_color2[BLUE]*255)
     # Clamp colors in case of floating point rounding errors
     r1, g1, b1 = max(r1, 0), max(g1, 0), max(b1, 0)
     r2, g2, b2 = max(r2, 0), max(g2, 0), max(b2, 0)
@@ -154,17 +158,18 @@ if __name__ == "__main__":
     r2, g2, b2 = min(r2, 255), min(g2, 255), min(b2, 255)
 
     with open(CAVA_CONFIG) as f:
-        cava_config = f.read()
-    cava_config = re.sub(r"^gradient_color_1 = '#.*$",
+        config_contents = f.read()
+    config_contents = re.sub(r"^gradient_color_1 = '#.*'$",
             "gradient_color_1 = '#%02x%02x%02x'" % (r1, g1, b1),
-            cava_config,
+            config_contents,
             flags=re.MULTILINE)
-    cava_config = re.sub(r"^gradient_color_2 = '#.*$",
+    config_contents = re.sub(r"^gradient_color_2 = '#.*'$",
             "gradient_color_2 = '#%02x%02x%02x'" % (r2, g2, b2),
-            cava_config,
+            config_contents,
             flags=re.MULTILINE)
 
     with open(CAVA_CONFIG, "w") as f:
-        f.write(cava_config)
+        f.write(config_contents)
 
+    # Tell cava to reload its config
     subprocess.Popen(["pkill", "-USR1", "cava"])
