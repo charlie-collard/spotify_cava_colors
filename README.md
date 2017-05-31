@@ -17,7 +17,7 @@ spotify_cava_colors
 
 ## Info
 
-The script will first make a request to the Spotify API, asking for the users
+The script will first make a request to the Spotify API, asking for the user's
 currently playing song. It will then download the album art for that song,
 decompose it into several characteristic colors, choose the "best" two colors,
 write those colors into the cava config, then tell cava to update.
