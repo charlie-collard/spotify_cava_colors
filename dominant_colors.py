@@ -41,7 +41,7 @@ def bucket_sort(pixels, levels):
     px1 = sorted_px[:len(sorted_px)/2]
     px2 = sorted_px[len(sorted_px)/2:]
     levels -= 1
-    if levels == 0:
+    if levels <= 0:
         return [px1, px2]
     else:
         return bucket_sort(px1, levels) + bucket_sort(px2, levels)
@@ -85,6 +85,7 @@ class RequestCtrl:
         # Obey rate limiting
         if r.status_code == 429:
             backoff_time = int(r.headers["Retry-After"])
+            print("Hit rate limit, sleeping for %d seconds..." % backoff_time)
             time.sleep(backoff_time)
             return self.make_request(endpoint, extra)
 
@@ -97,8 +98,7 @@ class RequestCtrl:
                         "refresh_token": self.refresh_token,
                         "grant_type": "refresh_token"
                         }
-                print(token_extras)
-                token_r = self.make_request(self.NEW_TOKEN, token_extras)
+                token_r = self.make_request(self.NEW_TOKEN, extra=token_extras)
                 self.access_token = token_r["access_token"]
                 with open(ACCESS_TOKEN_PATH, "w") as f:
                     f.write(self.access_token + "\n")
@@ -135,8 +135,8 @@ if __name__ == "__main__":
         color_sums = reduce(lambda x, y: (x[RED]+y[RED], x[GREEN]+y[GREEN], x[BLUE]+y[BLUE]), bucket)
         rgb_color = map(lambda x: x/len(bucket), color_sums)
         hsv_color = colorsys.rgb_to_hsv(rgb_color[RED], rgb_color[GREEN], rgb_color[BLUE])
-        colors.append(hsv_color)
         print_color(rgb_color)
+        colors.append(hsv_color)
 
     # Pick the brightest color
     color1 = max(colors, key=lambda x: x[VALUE])
