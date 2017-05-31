@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from PIL import Image
 from time import sleep
 from io import BytesIO
