@@ -2,8 +2,6 @@
 from PIL import Image
 from time import sleep
 from io import BytesIO
-import itertools
-import sys
 import colorsys
 import requests
 import os
