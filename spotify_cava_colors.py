@@ -128,7 +128,7 @@ if __name__ == "__main__":
     img = Image.open(BytesIO(requests.get(smallest_url).content))
     px = img.getdata()
     px = list(px)
-    px = filter(lambda x: not (x[RED]>250 and x[GREEN]>250 and x[BLUE]>250), px)
+    px = filter(lambda x: not (x[RED]>235 and x[GREEN]>235 and x[BLUE]>235), px)
     px = filter(lambda x: not (x[RED]<30 and x[GREEN]<30 and x[BLUE]<30), px)
     px = map(lambda x: (x[RED]/255., x[GREEN]/255., x[BLUE]/255.), px)
 
