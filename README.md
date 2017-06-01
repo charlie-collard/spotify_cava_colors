@@ -20,11 +20,12 @@ spotify_cava_colors
 The script will first make a request to the Spotify API, asking for the user's
 currently playing song. It will then download the album art for that song,
 decompose it into several characteristic colors, choose the "best" two colors,
-write those colors into the cava config, then tell cava to update.
+then write those colors into the cava config. It is up to you to manually
+reload cava or automatically send it the SIGUSR1 signal.
 
 The script will NOT automatically run when Spotify changes track, but one way
 of doing this might be to listen for notifications and run the script every
-time a Spotify notification is detected.
+time a Spotify notification is detected. An example bash script is included.
 
 It is assumed your cava config is stored at `~/.config/cava/config`, and that
 you have uncommented the relevant lines for gradient colors.
