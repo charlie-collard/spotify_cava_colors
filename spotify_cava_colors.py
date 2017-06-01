@@ -183,3 +183,6 @@ if __name__ == "__main__":
 
     with open(CAVA_CONFIG, "w") as f:
         f.write(config_contents)
+
+    # Tell cava to reload its config
+    subprocess.Popen(["pkill", "-USR1", "cava"])
