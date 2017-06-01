@@ -4,6 +4,7 @@ from time import sleep
 from io import BytesIO
 import colorsys
 import requests
+import sys
 import os
 import re
 import subprocess
@@ -22,9 +23,13 @@ APP_CREDENTIALS_PATH = FILE_PATH + "/auth/app_credentials"
 HOME_DIR = os.path.expanduser("~")
 CAVA_CONFIG = HOME_DIR + "/.config/cava/config"
 
+def log(string):
+    if "-d" in sys.argv:
+        print(string)
+
 def print_color(color):
     r, g, b = int(color[0]*255), int(color[1]*255), int(color[2]*255)
-    print("\x1b[48;2;%d;%d;%dm        \x1b[0m #%02x%02x%02x" % (r,g,b,r,g,b))
+    log("\x1b[48;2;%d;%d;%dm        \x1b[0m #%02x%02x%02x" % (r,g,b,r,g,b))
 
 def bucket_sort(pixels, levels):
     color_ranges = [
@@ -70,7 +75,7 @@ class RequestCtrl:
     def make_request(self, endpoint, extra={}):
         url = endpoint["url"]
         method = endpoint["method"]
-        print("Making request to '%s'..." % url)
+        log("Making request to '%s'..." % url)
         headers = {
                 "Authorization": "Bearer %s" % self.access_token
                 }
@@ -84,7 +89,7 @@ class RequestCtrl:
         # Obey rate limiting
         if r.status_code == 429:
             backoff_time = int(r.headers["Retry-After"])
-            print("Hit rate limit, sleeping for %d seconds..." % backoff_time)
+            log("Hit rate limit, sleeping for %d seconds..." % backoff_time)
             time.sleep(backoff_time)
             return self.make_request(endpoint, extra)
 
@@ -103,7 +108,7 @@ class RequestCtrl:
                     f.write(self.access_token + "\n")
                 return self.make_request(endpoint, extra)
             else:
-                print("Error, could not get new access token:\n" + str(r.json()))
+                log("Error, could not get new access token:\n" + str(r.json()))
                 exit()
         else:
             return json
@@ -117,7 +122,7 @@ if __name__ == "__main__":
         assert len(images) != 0
         smallest_url = min(images, key=lambda x: x["width"])["url"]
     except (KeyError, AssertionError):
-        print("Error getting image url")
+        log("Error getting image url")
         exit()
 
     img = Image.open(BytesIO(requests.get(smallest_url).content))
@@ -153,9 +158,9 @@ if __name__ == "__main__":
 
     rgb_color1 = colorsys.hsv_to_rgb(color1[HUE], color1[SATURATION], color1[VALUE])
     rgb_color2 = colorsys.hsv_to_rgb(color2[HUE], color2[SATURATION], color2[VALUE])
-    print("Color 1:")
+    log("Color 1:")
     print_color(rgb_color1)
-    print("Color 2:")
+    log("Color 2:")
     print_color(rgb_color2)
     r1, g1, b1 = int(rgb_color1[RED]*255), int(rgb_color1[GREEN]*255), int(rgb_color1[BLUE]*255)
     r2, g2, b2 = int(rgb_color2[RED]*255), int(rgb_color2[GREEN]*255), int(rgb_color2[BLUE]*255)
