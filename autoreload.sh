@@ -3,7 +3,7 @@
 interface=org.freedesktop.Notifications
 
 trap -- '' SIGUSR1
-dbus-monitor --profile "interface='$interface'" |
+dbus-monitor "interface='$interface'" |
 while read -r line; do
-    spotify_cava_colors
+    if [[ $line =~ Spotify ]]; then spotify_cava_colors; fi
 done
