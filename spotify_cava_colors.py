@@ -2,6 +2,7 @@
 from PIL import Image
 from time import sleep
 from io import BytesIO
+from math import sqrt
 import colorsys
 import requests
 import sys
@@ -123,74 +124,98 @@ def best_color(colors):
     return colors[fitnesses.index(max(fitnesses))]
 
 if __name__ == "__main__":
-    ctrl = RequestCtrl()
-    response = ctrl.make_request(RequestCtrl.CURRENTLY_PLAYING)
-    try:
-        images = response["item"]["album"]["images"]
-        assert len(images) != 0
-        smallest_url = min(images, key=lambda x: x["width"])["url"]
-    except (KeyError, AssertionError):
-        log("Error getting image url")
-        exit()
+    while True:
+        line = sys.stdin.readline()
+        if "Spotify" in line:
+            while True:
+                line = sys.stdin.readline()
+                if "image_data" in line:
+                    break
+            while True:
+                line = sys.stdin.readline()
+                if "array of bytes" in line:
+                    break
+            px = []
+            cur = []
+            while True:
+                line = sys.stdin.readline()
+                if "]" in line:
+                    break
+                line = line.split()
+                while len(line) > 0:
+                    cur.append(int(line.pop(0), 16))
+                    if len(cur) == 3:
+                        px.append(tuple(cur))
+                        cur = []
 
-    img = Image.open(BytesIO(requests.get(smallest_url).content))
-    px = img.getdata()
-    px = list(px)
-    px = filter(lambda x: not (x[RED]>235 and x[GREEN]>235 and x[BLUE]>235), px)
-    px = filter(lambda x: not (x[RED]<30 and x[GREEN]<30 and x[BLUE]<30), px)
-    px = map(lambda x: (x[RED]/255., x[GREEN]/255., x[BLUE]/255.), px)
+            # ctrl = RequestCtrl()
+            # response = ctrl.make_request(RequestCtrl.CURRENTLY_PLAYING)
+            # try:
+                # images = response["item"]["album"]["images"]
+                # assert len(images) != 0
+                # smallest_url = min(images, key=lambda x: x["width"])["url"]
+            # except (KeyError, AssertionError):
+                # log("Error getting image url")
+                # exit()
 
-    # Split the pixels into 2**n buckets
-    buckets = bucket_sort(px, 3)
-    colors = []
-    for bucket in buckets:
-        color_sums = reduce(lambda x, y: (x[RED]+y[RED], x[GREEN]+y[GREEN], x[BLUE]+y[BLUE]), bucket)
-        rgb_color = map(lambda x: x/len(bucket), color_sums)
-        hsv_color = colorsys.rgb_to_hsv(rgb_color[RED], rgb_color[GREEN], rgb_color[BLUE])
-        print_color(rgb_color)
-        colors.append(hsv_color)
+            # img = Image.open(BytesIO(requests.get(smallest_url).content))
+            # px = img.getdata()
+            # px = list(px)
+            px = filter(lambda x: not (x[RED]>235 and x[GREEN]>235 and x[BLUE]>235), px)
+            px = filter(lambda x: not (x[RED]<30 and x[GREEN]<30 and x[BLUE]<30), px)
+            px = map(lambda x: (x[RED]/255., x[GREEN]/255., x[BLUE]/255.), px)
 
-    # Pick the brightest color
-    color1 = best_color(colors)
-    colors.remove(color1)
-    # Filter colors with similar hues to the first chosen
-    no_similar_colors = filter(lambda x: min(1-abs(x[HUE]-color1[HUE]), abs(x[HUE]-color1[HUE])) > 0.1, colors)
-    if len(no_similar_colors) != 0 and any(map(lambda x: x[VALUE]>0.4, no_similar_colors)):
-        color2 = max(no_similar_colors, key=lambda x: x[VALUE])
-    else:
-        color2 = best_color(colors)
+            # Split the pixels into 2**n buckets
+            buckets = bucket_sort(px, 3)
+            colors = []
+            for bucket in buckets:
+                color_sums = reduce(lambda x, y: (x[RED]+y[RED], x[GREEN]+y[GREEN], x[BLUE]+y[BLUE]), bucket)
+                rgb_color = map(lambda x: x/len(bucket), color_sums)
+                hsv_color = colorsys.rgb_to_hsv(rgb_color[RED], rgb_color[GREEN], rgb_color[BLUE])
+                print_color(rgb_color)
+                colors.append(hsv_color)
 
-    # Darkest should be first
-    if color1[VALUE] > color2[VALUE]:
-        color1, color2 = color2, color1
+            # Pick the brightest color
+            color1 = best_color(colors)
+            colors.remove(color1)
+            # Filter colors with similar hues to the first chosen
+            no_similar_colors = filter(lambda x: min(1-abs(x[HUE]-color1[HUE]), abs(x[HUE]-color1[HUE])) > 0.1, colors)
+            if len(no_similar_colors) != 0 and any(map(lambda x: x[VALUE]>0.4, no_similar_colors)):
+                color2 = max(no_similar_colors, key=lambda x: x[VALUE])
+            else:
+                color2 = best_color(colors)
 
-    rgb_color1 = colorsys.hsv_to_rgb(color1[HUE], color1[SATURATION], color1[VALUE])
-    rgb_color2 = colorsys.hsv_to_rgb(color2[HUE], color2[SATURATION], color2[VALUE])
-    log("Color 1:")
-    print_color(rgb_color1)
-    log("Color 2:")
-    print_color(rgb_color2)
-    r1, g1, b1 = int(rgb_color1[RED]*255), int(rgb_color1[GREEN]*255), int(rgb_color1[BLUE]*255)
-    r2, g2, b2 = int(rgb_color2[RED]*255), int(rgb_color2[GREEN]*255), int(rgb_color2[BLUE]*255)
-    # Clamp colors in case of floating point rounding errors
-    r1, g1, b1 = max(r1, 0), max(g1, 0), max(b1, 0)
-    r2, g2, b2 = max(r2, 0), max(g2, 0), max(b2, 0)
-    r1, g1, b1 = min(r1, 255), min(g1, 255), min(b1, 255)
-    r2, g2, b2 = min(r2, 255), min(g2, 255), min(b2, 255)
+            # Darkest should be first
+            if color1[VALUE] > color2[VALUE]:
+                color1, color2 = color2, color1
 
-    with open(CAVA_CONFIG) as f:
-        config_contents = f.read()
-    config_contents = re.sub(r"^gradient_color_1 = '#.*'$",
-            "gradient_color_1 = '#%02x%02x%02x'" % (r1, g1, b1),
-            config_contents,
-            flags=re.MULTILINE)
-    config_contents = re.sub(r"^gradient_color_2 = '#.*'$",
-            "gradient_color_2 = '#%02x%02x%02x'" % (r2, g2, b2),
-            config_contents,
-            flags=re.MULTILINE)
+            rgb_color1 = colorsys.hsv_to_rgb(color1[HUE], color1[SATURATION], color1[VALUE])
+            rgb_color2 = colorsys.hsv_to_rgb(color2[HUE], color2[SATURATION], color2[VALUE])
+            log("Color 1:")
+            print_color(rgb_color1)
+            log("Color 2:")
+            print_color(rgb_color2)
+            r1, g1, b1 = int(rgb_color1[RED]*255), int(rgb_color1[GREEN]*255), int(rgb_color1[BLUE]*255)
+            r2, g2, b2 = int(rgb_color2[RED]*255), int(rgb_color2[GREEN]*255), int(rgb_color2[BLUE]*255)
+            # Clamp colors in case of floating point rounding errors
+            r1, g1, b1 = max(r1, 0), max(g1, 0), max(b1, 0)
+            r2, g2, b2 = max(r2, 0), max(g2, 0), max(b2, 0)
+            r1, g1, b1 = min(r1, 255), min(g1, 255), min(b1, 255)
+            r2, g2, b2 = min(r2, 255), min(g2, 255), min(b2, 255)
 
-    with open(CAVA_CONFIG, "w") as f:
-        f.write(config_contents)
+            with open(CAVA_CONFIG) as f:
+                config_contents = f.read()
+            config_contents = re.sub(r"^gradient_color_1 = '#.*'$",
+                    "gradient_color_1 = '#%02x%02x%02x'" % (r1, g1, b1),
+                    config_contents,
+                    flags=re.MULTILINE)
+            config_contents = re.sub(r"^gradient_color_2 = '#.*'$",
+                    "gradient_color_2 = '#%02x%02x%02x'" % (r2, g2, b2),
+                    config_contents,
+                    flags=re.MULTILINE)
 
-    # Tell cava to reload its config
-    subprocess.Popen(["pkill", "-USR1", "cava"])
+            with open(CAVA_CONFIG, "w") as f:
+                f.write(config_contents)
+
+            # Tell cava to reload its config
+            subprocess.Popen(["pkill", "-USR1", "cava"])
