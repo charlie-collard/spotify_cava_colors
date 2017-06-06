@@ -113,6 +113,14 @@ class RequestCtrl:
         else:
             return json
 
+def best_color(colors):
+    fitnesses = [color[VALUE]*300 for color in colors]
+    rgb_colors = [colorsys.hsv_to_rgb(c[HUE], c[SATURATION], c[VALUE]) for c in colors]
+    for i in range(len(rgb_colors)):
+        color = rgb_colors[i]
+        color_difference = abs(color[RED] - color[GREEN]) + abs(color[RED] - color[BLUE]) + abs(color[GREEN] - color[BLUE])
+        fitnesses[i] += color_difference*150
+    return colors[fitnesses.index(max(fitnesses))]
 
 if __name__ == "__main__":
     ctrl = RequestCtrl()
@@ -143,14 +151,14 @@ if __name__ == "__main__":
         colors.append(hsv_color)
 
     # Pick the brightest color
-    color1 = max(colors, key=lambda x: x[VALUE])
+    color1 = best_color(colors)
     colors.remove(color1)
     # Filter colors with similar hues to the first chosen
     no_similar_colors = filter(lambda x: min(1-abs(x[HUE]-color1[HUE]), abs(x[HUE]-color1[HUE])) > 0.1, colors)
     if len(no_similar_colors) != 0 and any(map(lambda x: x[VALUE]>0.4, no_similar_colors)):
         color2 = max(no_similar_colors, key=lambda x: x[VALUE])
     else:
-        color2 = max(colors, key=lambda x: x[VALUE])
+        color2 = best_color(colors)
 
     # Darkest should be first
     if color1[VALUE] > color2[VALUE]:
