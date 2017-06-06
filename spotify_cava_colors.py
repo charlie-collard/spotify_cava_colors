@@ -61,15 +61,15 @@ class RequestCtrl:
     def __init__(self):
         try:
             with open(ACCESS_TOKEN_PATH) as f:
-                    self.access_token = f.read()[:-1]
+                self.access_token = f.read().replace("\n", "")
         except IOError:
             with open(ACCESS_TOKEN_PATH, "w") as f:
                 f.write("")
             self.access_token = ""
         with open(REFRESH_TOKEN_PATH) as f:
-            self.refresh_token = f.read()[:-1]
+            self.refresh_token = f.read().replace("\n", "")
         with open(APP_CREDENTIALS_PATH) as f:
-            credentials = f.read()[:-1]
+            credentials = f.read().replace("\n", "")
             self.client_id, self.client_secret = credentials.split(":")
 
     def make_request(self, endpoint, extra={}):
