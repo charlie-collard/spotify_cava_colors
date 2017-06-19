@@ -28,7 +28,7 @@ def log(string):
         print(string)
 
 def print_color(color):
-    r, g, b = int(color[0]*255), int(color[1]*255), int(color[2]*255)
+    r, g, b = int(color[RED]*255), int(color[GREEN]*255), int(color[BLUE]*255)
     log("\x1b[48;2;%d;%d;%dm        \x1b[0m #%02x%02x%02x" % (r,g,b,r,g,b))
 
 def bucket_sort(pixels, levels):
@@ -150,7 +150,7 @@ if __name__ == "__main__":
         print_color(rgb_color)
         colors.append(hsv_color)
 
-    # Pick the brightest color
+    # Pick the best color
     color1 = best_color(colors)
     colors.remove(color1)
     # Filter colors with similar hues to the first chosen
