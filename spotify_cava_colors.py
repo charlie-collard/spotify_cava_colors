@@ -79,7 +79,7 @@ class RequestCtrl:
         headers = {
                 "Authorization": "Bearer %s" % self.access_token
                 }
-        if method.func_name == self.POST.func_name:
+        if method.__name__ == self.POST.__name__:
             if endpoint == self.NEW_TOKEN:
                 headers.pop("Authorization")
             r = method(url, data=extra, headers=headers)
