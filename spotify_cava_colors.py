@@ -94,6 +94,7 @@ class RequestCtrl:
             return self.make_request(endpoint, extra)
 
         json = r.json()
+        log("Got response: %s" % json)
         if "error" in json:
             if endpoint != self.NEW_TOKEN:
                 token_extras = {
